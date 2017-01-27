@@ -42,7 +42,7 @@ GameEngine.prototype.startInput = function () {
 
     this.ctx.canvas.addEventListener("keydown", function (e) {
         console.log(e)
-	if (e.code === "KeyW" || e.code === "ArrowUp") {
+	if (e.code === "KeyW") {
             that.w = true;
         }
         else if (e.code === "KeyS") {
