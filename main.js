@@ -238,7 +238,7 @@ Coin.prototype.draw = function () {
 }
 
 Coin.prototype.update = function () {
-  
+    this.x = this.x;
 }
 
 
