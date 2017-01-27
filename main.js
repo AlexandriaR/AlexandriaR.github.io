@@ -211,16 +211,34 @@ Fireball.prototype.draw = function () {
 }
 
 Fireball.prototype.update = function () {
-	if(this.game.movingFireball){
-		this.x += this.game.clockTick * this.speed;
-		if(this.x > 800){
-			this.x = 0;
-		}
-	}
-	else{
+    if(this.game.movingFireball){
+	this.x += this.game.clockTick * this.speed;
+	if(this.x > 800){
 		this.x = 0;
-        this.y = 300;
 	}
+    }
+    else{
+	this.x = 0;
+        this.y = 300;
+    }
+}
+
+function Coin(game, spritesheets) {
+    this.animation = new Animation(spritesheets, 16, 18, 7, .2, 7, true, 2);
+    this.x = 50;
+    this.y = 50;
+    this.speed = 170;
+    this.game = game;
+    this.ctx = game.ctx;
+    //this.dir = true;
+}
+
+Coin.prototype.draw = function () {
+    this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
+}
+
+Coin.prototype.update = function () {
+  
 }
 
 
@@ -238,6 +256,7 @@ AM.queueDownload("./PeachJumpLeft.png");
 AM.queueDownload("./Fireball.png");
 AM.queueDownload("./GoombaWalk.png");
 AM.queueDownload("./Level1.png");
+AM.queueDownload("./Coin.png");
 
 AM.downloadAll(function () {
     console.log("hello");
@@ -252,12 +271,14 @@ AM.downloadAll(function () {
     princessSprites = [AM.getAsset("./PeachIdleRight.png"), AM.getAsset("./PeachIdleLeft.png"), AM.getAsset("./PeachWalkRight.png"), AM.getAsset("./PeachWalkLeft.png"), AM.getAsset("./PeachCrouchRight.png"), AM.getAsset("./PeachCrouchLeft.png"), AM.getAsset("./PeachJumpRight.png"), AM.getAsset("./PeachJumpLeft.png"), AM.getAsset("./PeachThrowRight.png"), AM.getAsset("./PeachThrowLeft.png")];
     goombaSprites = [AM.getAsset("./GoombaWalk.png")];
     fireballSprites = [AM.getAsset("./Fireball.png")];
+    coinSprites = [AM.getAsset("./Coin.png")];
 
     gameEngine.addEntity(new Background(gameEngine, backgroundSprites));
     gameEngine.addEntity(new Goomba(gameEngine, goombaSprites));
     gameEngine.addEntity(new Princess(gameEngine, princessSprites));
 
-   gameEngine.addEntity(new Fireball(gameEngine, fireballSprites));
+    gameEngine.addEntity(new Fireball(gameEngine, fireballSprites));
+    gameEngine.addEntity(new Coin(gameEngine, coinSprites));
 
     console.log("All Done!");
 });
