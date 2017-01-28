@@ -241,7 +241,39 @@ Coin.prototype.update = function () {
     this.x = this.x;
 }
 
+function Koopa(game, spritesheets) {
+    this.animation = new Animation(spritesheets, 32, 36, 37, 0.4, 37, true, 20);
+    this.x = 300;
+    this.y = 655;
+    this.speed = 125;
+    this.game = game;
+    this.ctx = game.ctx;
+    this.dir = true;
+};
 
+Koopa.prototype.draw = function () {
+    this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
+};
+
+Koopa.prototype.update = function () {
+    if (this.x <= 0) {
+	this.dir = false;
+    }
+    if (this.x >= 1300 -(32*this.animation.scale) ) {
+	this.dir = true;
+	   
+    }
+if(this.animation.elapsedTime < this.animation.totalTime*8/37 ||(this.animation.elapsedTime > this.animation.totalTime*21/37 && this.animation.elapsedTime < this.animation.totalTime*31/37)){	
+    if(this.dir) {
+        
+        this.animation.change(this.animation.spritesheets[0], 32, 36, 37, 0.2, 37, true, 1.25);// facing right
+	this.x -= this.game.clockTick * this.speed;		// walking/moving to the right
+    } else{
+        this.animation.change(this.animation.spritesheets[1], 32, 36, 37, 0.2, 37, true, 1.25);
+        this.x += this.game.clockTick * this.speed;
+    }
+}
+ };
 
 AM.queueDownload("./PeachWalkLeft.png");
 AM.queueDownload("./PeachWalkRight.png");
@@ -257,6 +289,9 @@ AM.queueDownload("./Fireball.png");
 AM.queueDownload("./GoombaWalk.png");
 AM.queueDownload("./Level1.png");
 AM.queueDownload("./Coin.png");
+AM.queueDownload("./koopasprites.png");
+AM.queueDownload("./koopamirror.png");
+AM.queueDownload("./Level 2.png");
 
 AM.downloadAll(function () {
     console.log("hello");
@@ -272,6 +307,7 @@ AM.downloadAll(function () {
     goombaSprites = [AM.getAsset("./GoombaWalk.png")];
     fireballSprites = [AM.getAsset("./Fireball.png")];
     coinSprites = [AM.getAsset("./Coin.png")];
+    koopaSprites = [AM.getAsset("./koopasprites.png"), AM.getAsset("./koopamirror.png")];
 
     gameEngine.addEntity(new Background(gameEngine, backgroundSprites));
     gameEngine.addEntity(new Goomba(gameEngine, goombaSprites));
@@ -279,6 +315,7 @@ AM.downloadAll(function () {
 
     gameEngine.addEntity(new Fireball(gameEngine, fireballSprites));
     gameEngine.addEntity(new Coin(gameEngine, coinSprites));
+    gameEngine.addEntity(new Koopa(gameEngine, koopaSprites));
 
     console.log("All Done!");
 });
