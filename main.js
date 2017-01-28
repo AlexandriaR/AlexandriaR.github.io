@@ -259,7 +259,7 @@ Koopa.prototype.update = function () {
     if (this.x <= 0) {
 	this.dir = false;
     }
-    if (this.x >= 1300 -(32*this.animation.scale) ) {
+    if (this.x >= 750 -(32*this.animation.scale) ) {
 	this.dir = true;
 	   
     }
