@@ -1,6 +1,8 @@
 var AM = new AssetManager();
 var dir = true;
-
+//var isCollision = false;
+var isDead = false;
+var isFalling = true;
 
 function Animation(spritesheets, frameWidth, frameHeight, sheetWidth, frameDuration, frames, loop, scale) {
     this.spritesheets = spritesheets;
@@ -58,17 +60,54 @@ Animation.prototype.isDone = function () {
     return (this.elapsedTime >= this.totalTime);
 }
 
+Entity.prototype.collisionY = function(other) {
+
+	if(this.y <= other.y){
+		if(this.y + this.height/2 < other.y - other.height/2) return false;
+		return true;
+	}
+	else{
+		if(this.y - this.height/2 > other.y + other.height/2) return false;
+		return true;
+	}
+}
+Entity.prototype.collision = function(other){
+	
+	if(this.x <= other.x)
+	{
+		if(this.x + this.width/2 < other.x - other.width/2) return false;
+		return this.collisionY(other);
+	}
+	else {
+		if( this.x - this.width/2 > other.x + other.width/2) return false;
+		return this.collisionY(other);
+	}
+	/* 
+	return (this.x + this.width < other.x + other.width
+ 	&& this.x + this.width > other.x 
+ 	&& this.y < other.y + other.height
+ 	&& this.height + this.y > other.y); */
+ }
+
+
 // no inheritance
 function Background(game, spritesheets) {
-    this.animation = new Animation(spritesheets, 2000, 320, 2, 0.4, 2, true, 2.17);
+    this.spritesheet = spritesheets[0];
     this.x = 0;
     this.y = 0;
+	this.width = 800;
+	this.height = 800;
     this.game = game;
     this.ctx = game.ctx;
-};
+    Entity.call(this, game, 0, 0, 800, 800);
+}
+ 
+ Background.prototype = new Entity();
+ Background.prototype.constructor = Background;
 
 Background.prototype.draw = function () {
-    this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
+    this.ctx.drawImage(this.spritesheet, this.x, this.y);
+	Entity.prototype.draw.call(this);
 };
 
 Background.prototype.update = function () {
@@ -80,158 +119,255 @@ function Block(game, spriteshets) {
     this.y = 0;
     this.game = game;
     this.ctx = game.ctx;
+    Entity.call(this, game, 0, 0, 0, 0);
 };
+
+
+Block.prototype = new Entity();
+Block.prototype.constructor = Block;
 
 Block.prototype.draw = function () {
     this.ctx.drawImage(this.spritesheet, this.x, this.y);
+	Block.prototype = new Entity();
+    Block.prototype.constructor = Block;
 };
 
 Block.prototype.update = function () {
+	 Entity.prototype.update.call(this);
 };
 
-function Cam(game, background, princess) {
-    this.x = 350;
-    this.y = 0;
-    this.game = game;
-    this.ctx = game.ctx;
-    bg = background;
-    mc = princess
-}
 
-Cam.prototype.update = function () {
-    if(mc.x >= this.x && (mc.game.walking || mc.game.jump) && bg.x > bg.game.surfaceWidth - bg.animation.frameWidth * bg.animation.scale){
-        bg.x = bg.x - mc.speed * mc.game.clockTick;
-    } else if(mc.x < 0 && (mc.game.walking || mc.game.jump) && bg.x < 0){
-        bg.x = bg.x + mc.speed * mc.game.clockTick;
-    }
-};
-
-Cam.prototype.draw = function (){
-    
-};
-
-function Princess(game, spritesheets, background) {
+function Princess(game, spritesheets) {
     this.animation = new Animation(spritesheets, 48, 80, 4, 0.2, 4, true, 1.25);
-    this.x = 300;
+    this.x = 500;
     this.y = 565;
-    this.speed = 500;
+	this.width = this.animation.frameWidth;
+    this.height = this.animation.frameHeight;
+    this.speed = 125;
     this.game = game;
     this.ctx = game.ctx;
     this.dir = true;
     this.walking = false;
-    this.jump = false;
-    bg = background
+    this.jumpAnimation = new Animation(spritesheets, 48, 80, 4, 0.2, 4, true, 1.25);
+    this.jumping = false;
+	this.isFalling = false;
+	this.ground = 565;
+	Entity.call(this, game,this.x, this.y, this.width, this.height);
 }
+Princess.prototype = new Entity();
+Princess.prototype.constructor = Princess;
 
 Princess.prototype.draw = function () {
-    this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
-};
+   if(isDead === false){
+	   if (this.game.w) { 
+			this.jumpAnimation.drawFrame(this.game.clockTick, this.ctx, this.x + 17, this.y - 34);
+	  
+		}else {
+			this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
+		}
+		Entity.prototype.draw.call(this);
+   }	
+}
 
 
-Princess.prototype.update = function () {
-    if (this.game.d) {
-        this.dir = true;
-    }
-    else if (this.game.a) {
-        this.dir = false;
-    }
-//    if (this.x <= 0) {
-//	this.dir = true;
-//    }
-//    if (this.x >= 750 ) {
-//	this.dir = false;
-//	   
-//    }
-	
-    if(this.dir) {		// facing right
-        if (this.game.walking && (this.x < 350 || (bg.x <= bg.game.surfaceWidth - bg.animation.frameWidth * bg.animation.scale && this.x < this.game.surfaceWidth - this.animation.frameWidth))) {
-	    this.x += this.game.clockTick * this.speed;		// walking/moving to the right
-        }
-        if (this.game.s) {
-            this.animation.change(this.animation.spritesheets[4], 67, 80, 3, 0.2, 3, true, 1.25); 	// crouch right
-        } else if (this.game.w) {
-            this.animation.change(this.animation.spritesheets[6], 56, 80, 7, 0.2, 7, true, 1.5); 	// jump right
-            if (this.animation.elapsedTime < this.animation.totalTime * (1/2)) {
-                this.y -= 5;
-            }
-        } else if (this.game.walking) {
-            this.animation.change(this.animation.spritesheets[2], 48, 80, 4, 0.2, 4, true, 1.25);	// walking right
-        } else if (this.game.throw) {
-            this.animation.change(this.animation.spritesheets[8], 80, 80, 3, 0.2, 3, true, 1.5);	// throwing right
+Princess.prototype.update = function (gameEngine) {
+	if(isDead === false ){
+		if (this.game.d) {
+			this.dir = true;
+		}
+		else if (this.game.a) {
+			this.dir = false;
+		}
+		if (this.x <= 0) {
+			this.dir = true;
+		}
+		if (this.x >= 750 ) {
+			this.dir = false;
+		   
+		}
+		
+		if(this.dir) {		// facing right
+			if (this.game.walking) {
+				this.x += this.game.clockTick * this.speed;
+			}
+			// moving/jumping to the right
+			if (this.game.w) {
+			
+				var jumpDistance = this.jumpAnimation.elapsedTime / this.jumpAnimation.totalTime;
+				var totalHeight = 200;
 
-        } else {
-            this.animation.change(this.animation.spritesheets[0], 48, 80, 9, 0.2, 9, true, 1.25);	// standing right
-	}
-    } else {			// facing left
-        if (this.game.walking && this.x > 0) {
-	    this.x -= this.game.clockTick * this.speed;		// walking/moving to the left
-        }
-        if (this.game.s) {
-            this.animation.change(this.animation.spritesheets[5], 67, 80, 3, 0.2, 3, true, 1.25);	// crouch left
-        } else if (this.game.w) {
-            this.animation.change(this.animation.spritesheets[7], 56, 80, 7, 0.2, 7, true, 1.5); 	// jump left
-            if (this.animation.elapsedTime < this.animation.totalTime * (1/2)) {
-                this.y -= 5;
-            }
-        } else if (this.game.walking) {
-            this.animation.change(this.animation.spritesheets[3], 48, 80, 4, 0.2, 4, true, 1.25);	// walking left
-        } else if (this.game.throw) {
-            this.animation.change(this.animation.spritesheets[9], 80, 80, 3, 0.2, 3, true, 1.5);	// throwing left
+			if (jumpDistance > 0.5)
+				jumpDistance = 1 - jumpDistance;
 
-        } else {
-            this.animation.change(this.animation.spritesheets[1], 48, 80, 9, 0.2, 9, true, 1.25);	// standing left
-        }
-    } 
-    if (this.y < 565) {
-        this.y += 2;
-    }
+			//var height = jumpDistance * 2 * totalHeight;
+				var height = totalHeight*(-4 * (jumpDistance * jumpDistance - jumpDistance));
+				this.y = this.ground - height;
+				if (this.y + this.height > this.ground){
+					
+					this.animation.elapsedTime = 0;
+				}
+				
+				this.jumpAnimation.change(this.jumpAnimation.spritesheets[6],  56, 80, 7, 0.2, 7, true, 1.5);
+          
+			}
+			if (this.game.s) {
+				this.animation.change(this.animation.spritesheets[4], 67, 80, 3, 0.2, 3, true, 1.25); 	// crouch right
+			} else if (this.game.walking) {
+				this.animation.change(this.animation.spritesheets[2], 48, 80, 4, 0.2, 4, true, 1.25);	// walking right
+			} else if (this.game.throw) {
+				this.animation.change(this.animation.spritesheets[8], 80, 80, 3, 0.2, 3, true, 1.5);	// throwing right
+			}else {
+				this.animation.change(this.animation.spritesheets[0], 48, 80, 9, 0.2, 9, true, 1.25);	// standing right
+			}
+		} else {			// facing left
+			if (this.game.walking) {
+			this.x -= this.game.clockTick * this.speed;		// walking/moving to the left
+			}
+			if (this.game.w) { // jumping left
+			
+				var jumpDistance = this.jumpAnimation.elapsedTime / this.jumpAnimation.totalTime;
+				var totalHeight = 200;
 
-};
+			if (jumpDistance > 0.5)
+				jumpDistance = 1 - jumpDistance;
 
-function Goomba(game, spritesheets, background) {
+			//var height = jumpDistance * 2 * totalHeight;
+				var height = totalHeight*(-4 * (jumpDistance * jumpDistance - jumpDistance));
+				this.y = this.ground - height;
+				//this.jumping = false;
+				this.jumpAnimation.change(this.jumpAnimation.spritesheets[7], 56, 80, 7, 0.2, 7, true, 1.5);
+			
+			}
+			
+			 if (this.game.s) {
+				this.animation.change(this.animation.spritesheets[5], 67, 80, 3, 0.2, 3, true, 1.25);	// crouch left
+			} else if (this.game.walking) {
+				this.animation.change(this.animation.spritesheets[3], 48, 80, 4, 0.2, 4, true, 1.25);	// walking left
+			} else if (this.game.throw) {
+				this.animation.change(this.animation.spritesheets[9], 80, 80, 3, 0.2, 3, true, 1.5);	// throwing left
+			}else {
+				this.animation.change(this.animation.spritesheets[1], 48, 80, 9, 0.2, 9, true, 1.25);	// standing left
+			}
+		} 
+		
+		if (this.y < 565 && this.dir) {
+			this.jumping = true;
+			this.animation.change(this.jumpAnimation.spritesheets[6],  56, 80, 7, 0.2, 7, true, 1.5)
+			this.y += 2; // After jump it drops.
+			this.isFalling = true;
+			if(this.isFalling && this.game.w){
+				this.isFalling = false;
+			}
+		}
+		else if (this.y < 565 && !this.dir) {
+			this.jumping = true;
+			this.animation.change(this.jumpAnimation.spritesheets[7],  56, 80, 7, 0.2, 7, true, 1.5)
+			this.y += 2; // After jump it drops.
+			this.isFalling = true;
+			if(this.isFalling && this.game.w){
+				this.isFalling = false;
+			}
+			
+		}	
+		
+			
+		for (var i = 0; i < this.game.entities.length; i++) {
+			 var ent = this.game.entities[i];
+			 if (ent !== this && this.collision(ent) && (ent instanceof Goomba)) {
+				 console.log("COLLISION!");
+				 if(ent.y - 35 != this.y){
+				 ent.removeFromWorld = true;
+				 ent.x = -1000;
+				 ent.y = -1000;
+				 }
+				
+				 else{
+					 isDead = true;
+					 this.x = -1000;
+					 this.y = -1000;
+					 
+				 }
+			 }
+		 }
+		 
+		 for (var i = 0; i < this.game.entities.length; i++) {
+			 var ent = this.game.entities[i];
+			 if (ent !== this && this.collision(ent) && (ent instanceof Coin)) {
+				 console.log("COLLISION!");
+				 ent.x = -1000;
+				 ent.y = -1000;
+				 ent.removeFromWorld = true;
+				 this.game.score++;
+			 }
+		 }
+		 
+		
+		Entity.prototype.update.call(this);
+		
+	} 
+ }
+
+
+function Goomba(game, spritesheets,mul) {
     this.animation = new Animation(spritesheets, 60, 72, 5, .2, 5, true, 1);
-    bg = background;
-    this.x = bg.x + 500;
+    this.x = 100 * mul;
     this.y = 600;
-    this.speed = 100;
+	this.width = this.animation.frameWidth;
+    this.height = this.animation.frameHeight;
+    this.speed = 50;
     this.game = game;
     this.ctx = game.ctx;
     this.dir = true;
-    
+	Entity.call(this, game, this.x, this.y, this.width, this.height);
+	
 }
+Goomba.prototype = new Entity();
+Goomba.prototype.constructor = Goomba;
 
 Goomba.prototype.draw = function () {
-    this.animation.drawFrame(this.game.clockTick, this.ctx, bg.x + this.x, this.y);
-};
+	if(!this.removeFromWorld){
+        this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
+	    Entity.prototype.draw.call(this);
+	}
+}
 
 Goomba.prototype.update = function () {
-    if (this.x <= bg.x + 0) {
-	this.dir = true;
+	if(!this.removeFromWorld){
+		if (this.x <= 0) {
+		this.dir = true;
+		}
+		if (this.x >= 750 ) {
+		this.dir = false;
+		}
+		if (this.dir) {
+			this.x += this.game.clockTick * this.speed;
+		} else {
+			this.x -= this.game.clockTick * this.speed;
+		}
+		Entity.prototype.update.call(this);
     }
-    if (this.x >= bg.x + 750 ) {
-	this.dir = false;
-    }
-    if (this.dir) {
-        this.x += this.game.clockTick * this.speed;
-    } else {
-        this.x -= this.game.clockTick * this.speed;
-    }
-};
+}
 
 //new code
 function Fireball(game, spritesheets) {
     this.animation = new Animation(spritesheets, 19, 22, 3, .2, 8, true, 2);
-    this.x = 0;
+    this.x = 300;
     this.y = 300;
+	this.width = this.animation.frameWidth;
+    this.height = this.animation.frameHeight;
     this.speed = 170;
     this.game = game;
     this.ctx = game.ctx;
     //this.dir = true;
+	Entity.call(this, game, 0, 300, this.width, this.height);
 }
-
+Fireball.prototype = new Entity();
+Fireball.prototype.constructor = Fireball;
+  
 Fireball.prototype.draw = function () {
     this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
-};
+	Entity.prototype.draw.call(this);
+}
 
 Fireball.prototype.update = function () {
 	if(this.game.movingFireball){
@@ -244,7 +380,37 @@ Fireball.prototype.update = function () {
 		this.x = 0;
         this.y = 300;
 	}
-};
+	Entity.prototype.update.call(this);
+}
+
+function Coin(game, spritesheets, backgroundEnt, mul) {
+	
+	this.animation = new Animation(spritesheets, 32, 36, 7, .2, 7, true, 1);
+    this.x = backgroundEnt.x + 150 * mul;
+    this.y = 350;
+	this.width = this.animation.frameWidth;
+    this.height = this.animation.frameHeight;
+    this.speed = 170;
+    this.game = game;
+    this.ctx = game.ctx;
+	
+    Entity.call(this, game, this.x,this.y, this.width, this.height);
+}
+Coin.prototype = new Entity();
+Coin.prototype.constructor = Coin;
+  
+Coin.prototype.draw = function () {
+	if(this.removeFromWorld != true)
+	{
+		this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
+		Entity.prototype.draw.call(this);
+	}
+}
+
+Coin.prototype.update = function () {
+	
+	//Entity.prototype.update.call(this);
+}
 
 
 
@@ -261,8 +427,7 @@ AM.queueDownload("./PeachJumpLeft.png");
 AM.queueDownload("./Fireball.png");
 AM.queueDownload("./GoombaWalk.png");
 AM.queueDownload("./Level1.png");
-AM.queueDownload("./Level 2.png");
-
+AM.queueDownload("./Coin.png");
 AM.downloadAll(function () {
     console.log("hello");
     var canvas = document.getElementById("gameWorld");
@@ -271,18 +436,28 @@ AM.downloadAll(function () {
     var gameEngine = new GameEngine();
     gameEngine.init(ctx);
     gameEngine.start();
-
-    backgroundSprites = [AM.getAsset("./Level 2.png")];
+	
+    backgroundSprites = [AM.getAsset("./Level1.png")];
     princessSprites = [AM.getAsset("./PeachIdleRight.png"), AM.getAsset("./PeachIdleLeft.png"), AM.getAsset("./PeachWalkRight.png"), AM.getAsset("./PeachWalkLeft.png"), AM.getAsset("./PeachCrouchRight.png"), AM.getAsset("./PeachCrouchLeft.png"), AM.getAsset("./PeachJumpRight.png"), AM.getAsset("./PeachJumpLeft.png"), AM.getAsset("./PeachThrowRight.png"), AM.getAsset("./PeachThrowLeft.png")];
     goombaSprites = [AM.getAsset("./GoombaWalk.png")];
     fireballSprites = [AM.getAsset("./Fireball.png")];
-    gameEngine.addEntity(new Background(gameEngine, backgroundSprites));
-    gameEngine.addEntity(new Goomba(gameEngine, goombaSprites, gameEngine.entities[0]));
-    gameEngine.addEntity(new Princess(gameEngine, princessSprites, gameEngine.entities[0]));
-    gameEngine.addEntity(new Cam(gameEngine, gameEngine.entities[0], gameEngine.entities[2]));
+    CoinSprites = [AM.getAsset("./Coin.png")];
+	backgroundEnt = new Background(gameEngine, backgroundSprites);
+	princessEnt =  new Princess(gameEngine, princessSprites);
+    gameEngine.addEntity(backgroundEnt);
+	for(var i = 0; i < 3; i++){
+		gameEngine.addEntity(new Goomba(gameEngine, goombaSprites,i+1));
+	}
+    //gameEngine.addEntity(new Goomba(gameEngine, goombaSprites));
+    gameEngine.addEntity(princessEnt);
+    gameEngine.addEntity(new Fireball(gameEngine, fireballSprites));
 
-   gameEngine.addEntity(new Fireball(gameEngine, fireballSprites));
-
+	
+	for(var i = 0; i < 100; i++)
+	{
+		gameEngine.addEntity(new Coin(gameEngine,CoinSprites, backgroundEnt, i + 1));
+		
+	}
+	
     console.log("All Done!");
 });
-
