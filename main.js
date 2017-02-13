@@ -60,7 +60,7 @@ Animation.prototype.isDone = function () {
 
 // no inheritance
 function Background(game, spritesheets) {
-    this.spritesheet = spritesheets[0];
+    this.animation = new Animation(spritesheets, 2000, 320, 2, 0.4, 2, true, 2.17);
     this.x = 0;
     this.y = 0;
     this.game = game;
@@ -68,7 +68,7 @@ function Background(game, spritesheets) {
 };
 
 Background.prototype.draw = function () {
-    this.ctx.drawImage(this.spritesheet, this.x, this.y);
+    this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
 };
 
 Background.prototype.update = function () {
@@ -89,22 +89,43 @@ Block.prototype.draw = function () {
 Block.prototype.update = function () {
 };
 
+function Cam(game, background, princess) {
+    this.x = 350;
+    this.y = 0;
+    this.game = game;
+    this.ctx = game.ctx;
+    bg = background;
+    mc = princess
+}
 
-function Princess(game, spritesheets) {
+Cam.prototype.update = function () {
+    if(mc.x >= this.x && (mc.game.walking || mc.game.jump) && bg.x > bg.game.surfaceWidth - bg.animation.frameWidth * bg.animation.scale){
+        bg.x = bg.x - mc.speed * mc.game.clockTick;
+    } else if(mc.x < 0 && (mc.game.walking || mc.game.jump) && bg.x < 0){
+        bg.x = bg.x + mc.speed * mc.game.clockTick;
+    }
+};
+
+Cam.prototype.draw = function (){
+    
+};
+
+function Princess(game, spritesheets, background) {
     this.animation = new Animation(spritesheets, 48, 80, 4, 0.2, 4, true, 1.25);
     this.x = 300;
     this.y = 565;
-    this.speed = 125;
+    this.speed = 500;
     this.game = game;
     this.ctx = game.ctx;
     this.dir = true;
     this.walking = false;
     this.jump = false;
+    bg = background
 }
 
 Princess.prototype.draw = function () {
     this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
-}
+};
 
 
 Princess.prototype.update = function () {
@@ -114,16 +135,16 @@ Princess.prototype.update = function () {
     else if (this.game.a) {
         this.dir = false;
     }
-    if (this.x <= 0) {
-	this.dir = true;
-    }
-    if (this.x >= 750 ) {
-	this.dir = false;
-	   
-    }
+//    if (this.x <= 0) {
+//	this.dir = true;
+//    }
+//    if (this.x >= 750 ) {
+//	this.dir = false;
+//	   
+//    }
 	
     if(this.dir) {		// facing right
-        if (this.game.walking) {
+        if (this.game.walking && (this.x < 350 || (bg.x <= bg.game.surfaceWidth - bg.animation.frameWidth * bg.animation.scale && this.x < this.game.surfaceWidth - this.animation.frameWidth))) {
 	    this.x += this.game.clockTick * this.speed;		// walking/moving to the right
         }
         if (this.game.s) {
@@ -142,7 +163,7 @@ Princess.prototype.update = function () {
             this.animation.change(this.animation.spritesheets[0], 48, 80, 9, 0.2, 9, true, 1.25);	// standing right
 	}
     } else {			// facing left
-        if (this.game.walking) {
+        if (this.game.walking && this.x > 0) {
 	    this.x -= this.game.clockTick * this.speed;		// walking/moving to the left
         }
         if (this.game.s) {
@@ -165,27 +186,29 @@ Princess.prototype.update = function () {
         this.y += 2;
     }
 
-}
+};
 
-function Goomba(game, spritesheets) {
+function Goomba(game, spritesheets, background) {
     this.animation = new Animation(spritesheets, 60, 72, 5, .2, 5, true, 1);
-    this.x = 500;
+    bg = background;
+    this.x = bg.x + 500;
     this.y = 600;
     this.speed = 100;
     this.game = game;
     this.ctx = game.ctx;
     this.dir = true;
+    
 }
 
 Goomba.prototype.draw = function () {
-    this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
-}
+    this.animation.drawFrame(this.game.clockTick, this.ctx, bg.x + this.x, this.y);
+};
 
 Goomba.prototype.update = function () {
-    if (this.x <= 0) {
+    if (this.x <= bg.x + 0) {
 	this.dir = true;
     }
-    if (this.x >= 750 ) {
+    if (this.x >= bg.x + 750 ) {
 	this.dir = false;
     }
     if (this.dir) {
@@ -193,7 +216,7 @@ Goomba.prototype.update = function () {
     } else {
         this.x -= this.game.clockTick * this.speed;
     }
-}
+};
 
 //new code
 function Fireball(game, spritesheets) {
@@ -208,72 +231,22 @@ function Fireball(game, spritesheets) {
 
 Fireball.prototype.draw = function () {
     this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
-}
+};
 
 Fireball.prototype.update = function () {
-    if(this.game.movingFireball){
-	this.x += this.game.clockTick * this.speed;
-	if(this.x > 800){
-		this.x = 0;
+	if(this.game.movingFireball){
+		this.x += this.game.clockTick * this.speed;
+		if(this.x > 800){
+			this.x = 0;
+		}
 	}
-    }
-    else{
-	this.x = 0;
+	else{
+		this.x = 0;
         this.y = 300;
-    }
-}
-
-function Coin(game, spritesheets) {
-    this.animation = new Animation(spritesheets, 16, 18, 7, .2, 7, true, 2);
-    this.x = 50;
-    this.y = 50;
-    this.speed = 170;
-    this.game = game;
-    this.ctx = game.ctx;
-    //this.dir = true;
-}
-
-Coin.prototype.draw = function () {
-    this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
-}
-
-Coin.prototype.update = function () {
-    this.x = this.x;
-}
-
-function Koopa(game, spritesheets) {
-    this.animation = new Animation(spritesheets, 32, 36, 37, 0.4, 37, true, 20);
-    this.x = 300;
-    this.y = 655;
-    this.speed = 125;
-    this.game = game;
-    this.ctx = game.ctx;
-    this.dir = true;
+	}
 };
 
-Koopa.prototype.draw = function () {
-    this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y);
-};
 
-Koopa.prototype.update = function () {
-    if (this.x <= 0) {
-	this.dir = false;
-    }
-    if (this.x >= 750) {
-	this.dir = true;
-	   
-    }
-if(this.animation.elapsedTime < this.animation.totalTime*8/37 ||(this.animation.elapsedTime > this.animation.totalTime*21/37 && this.animation.elapsedTime < this.animation.totalTime*31/37)){	
-    if(this.dir) {
-        
-        this.animation.change(this.animation.spritesheets[0], 32, 36, 37, 0.2, 37, true, 1.25);// facing right
-	this.x -= this.game.clockTick * this.speed;		// walking/moving to the right
-    } else{
-        this.animation.change(this.animation.spritesheets[1], 32, 36, 37, 0.2, 37, true, 1.25);
-        this.x += this.game.clockTick * this.speed;
-    }
-}
- };
 
 AM.queueDownload("./PeachWalkLeft.png");
 AM.queueDownload("./PeachWalkRight.png");
@@ -288,9 +261,6 @@ AM.queueDownload("./PeachJumpLeft.png");
 AM.queueDownload("./Fireball.png");
 AM.queueDownload("./GoombaWalk.png");
 AM.queueDownload("./Level1.png");
-AM.queueDownload("./Coin.png");
-AM.queueDownload("./koopasprites.png");
-AM.queueDownload("./koopamirror.png");
 AM.queueDownload("./Level 2.png");
 
 AM.downloadAll(function () {
@@ -302,20 +272,17 @@ AM.downloadAll(function () {
     gameEngine.init(ctx);
     gameEngine.start();
 
-    backgroundSprites = [AM.getAsset("./Level1.png")];
+    backgroundSprites = [AM.getAsset("./Level 2.png")];
     princessSprites = [AM.getAsset("./PeachIdleRight.png"), AM.getAsset("./PeachIdleLeft.png"), AM.getAsset("./PeachWalkRight.png"), AM.getAsset("./PeachWalkLeft.png"), AM.getAsset("./PeachCrouchRight.png"), AM.getAsset("./PeachCrouchLeft.png"), AM.getAsset("./PeachJumpRight.png"), AM.getAsset("./PeachJumpLeft.png"), AM.getAsset("./PeachThrowRight.png"), AM.getAsset("./PeachThrowLeft.png")];
     goombaSprites = [AM.getAsset("./GoombaWalk.png")];
     fireballSprites = [AM.getAsset("./Fireball.png")];
-    coinSprites = [AM.getAsset("./Coin.png")];
-    koopaSprites = [AM.getAsset("./koopasprites.png"), AM.getAsset("./koopamirror.png")];
-
     gameEngine.addEntity(new Background(gameEngine, backgroundSprites));
-    gameEngine.addEntity(new Goomba(gameEngine, goombaSprites));
-    gameEngine.addEntity(new Princess(gameEngine, princessSprites));
+    gameEngine.addEntity(new Goomba(gameEngine, goombaSprites, gameEngine.entities[0]));
+    gameEngine.addEntity(new Princess(gameEngine, princessSprites, gameEngine.entities[0]));
+    gameEngine.addEntity(new Cam(gameEngine, gameEngine.entities[0], gameEngine.entities[2]));
 
-    gameEngine.addEntity(new Fireball(gameEngine, fireballSprites));
-    gameEngine.addEntity(new Coin(gameEngine, coinSprites));
-    gameEngine.addEntity(new Koopa(gameEngine, koopaSprites));
+   gameEngine.addEntity(new Fireball(gameEngine, fireballSprites));
 
     console.log("All Done!");
 });
+
