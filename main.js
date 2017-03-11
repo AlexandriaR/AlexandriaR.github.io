@@ -603,8 +603,8 @@ Princess.prototype.update = function (gameEngine) {
 	    enemies.push(koopa);
             gmb = new Goomba(this.game, goombaSprites, this.bg, 3500, 600, 3000, 3600);
             enemies.push(gmb);
-            gmb = new Goomba(this.game, goombaSprites, this.bg, 3400, 160, 3300, 3480);
-            enemies.push(gmb);
+//             gmb = new Goomba(this.game, goombaSprites, this.bg, 3400, 160, 3300, 3480);
+//             enemies.push(gmb);
             this.game.enemies = enemies;
             
             var coins = [];
