@@ -421,7 +421,7 @@ Princess.prototype.update = function (gameEngine) {
             this.game.blocks = blocks;
             
             var enemies = [];
-	    var spikeSprites = [AM.getAsset("./Spike.png")];
+	    var spikeSprites = [AM.getAsset("./spike.png")];
 	    var koopaSprites = [AM.getAsset("./koopawalkright.png"), AM.getAsset("./koopawalkleft.png"), AM.getAsset("./koopafallright.png"), AM.getAsset("./koopafallleft.png"), AM.getAsset("./koopashellidleright.png"), AM.getAsset("./koopashellidleleft.png"), AM.getAsset("./koopaspinright.png"), AM.getAsset("./koopaspinleft.png")];
 	    
             var goombaSprites = [AM.getAsset("./GoombaWalk.png")];
@@ -1255,7 +1255,7 @@ AM.queueDownload("./koopaspinright.png");
 AM.queueDownload("./koopaspinleft.png");
 AM.queueDownload("./koopafallleft.png");
 AM.queueDownload("./koopafallright.png");
-AM.queueDownload("./Spike.png");
+AM.queueDownload("./spike.png");
 
 AM.downloadAll(function () {
 //    console.log("hello");
