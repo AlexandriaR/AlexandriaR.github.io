@@ -1406,6 +1406,6 @@ AM.downloadAll(function () {
     gameEngine.keyEnt = keyEnt;
 
     gameEngine.showOutlines = true;
-    //gameEngine.addEntity(new cutscene(gameEngine, cutsceneSprites, 1));
+    gameEngine.addEntity(new cutscene(gameEngine, cutsceneSprites, 1));
     console.log("All Done!");
 });
